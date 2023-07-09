@@ -50,11 +50,19 @@
           </h6>
         <ul class="nav flex-column">
           <li class="nav-item">
-            <a id="voter_nav" class="nav-link active" aria-current="page" href="#" onclick="toggle('voter')">
+            <a id="voter_dashboard_nav" style="cursor: pointer;" class="nav-link active" aria-current="page" onclick="toggle('voter_dashboard')">
               <span data-feather="home" class="align-text-bottom"></span>
             Dashboard
             </a>
           </li>
+          {% if voting_is_live %}
+          <li class="nav-item">
+            <a id="live_voting_nav" style="cursor: pointer;" class="nav-link" aria-current="page" onclick="toggle('live_voting')">
+              <span data-feather="home" class="align-text-bottom"></span>
+            Live Voting
+            </a>
+          </li>
+          {% endif %}
 
 
         </ul>
@@ -66,57 +74,217 @@
           </a>
         </h6>
         <ul class="nav flex-column mb-2">
+          {% if user_details['verified_candidate'] %}
           <li class="nav-item">
-            <a id="candidate_nav" class="nav-link" href="#" onclick="toggle('candidate')">
+            <a id="candidate_profile_nav" style="cursor: pointer;" class="nav-link"  onclick="toggle('candidate_profile')">
+              <span data-feather="file-text" class="align-text-bottom"></span>
+              Profile
+            </a>
+          </li>
+          {% endif %}
+          <li class="nav-item">
+            <a id="candidate_dashboard_nav" style="cursor: pointer;" class="nav-link" onclick="toggle('candidate_dashboard')">
               <span data-feather="file-text" class="align-text-bottom"></span>
               Dashboard
             </a>
           </li>
+
+
 
         </ul>
         {% endif %}
       </div>
     </nav>
 
-    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4" id="voter_section">
+    <main class="sections col-md-9 ms-sm-auto col-lg-10 px-md-4" id="voter_dashboard">
+      {% with messages = get_flashed_messages() %}
+      {% if messages %}
+          {% for message in messages %}
+          <div class="alert alert-info alert-dismissible fade show my-2" role="alert">
+            <b>{{message}}</b>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+          {% endfor %}
+      {% endif %}
+      {% endwith %}
       <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2">Voter Dashboard</h1>
     </div>
-  {% if not user_details['verified_voter'] %}
-  <h5 style="color:red;"><b>Complete Your KYC before starting to Vote for Candidates</b></h5>
-  <form action="">
+  {% if not user_details['applied_for_voter_kyc'] %}
+  <div class="alert alert-danger" role="alert">
+    <b>Complete Your KYC before starting to Vote for Candidates</b>
+  </div>
+  <form action="/voter/kyc" method="post" enctype=multipart/form-data>
       <div class="form-floating my-2">
-          <input type="email" class="form-control" id="floatingInput" name="email" placeholder="name@example.com" required>
+          <input type="text" class="form-control" id="floatingInput" placeholder="Full Name" name="name" required>
           <label for="floatingInput">Full Name</label>
         </div>
       <div class="form-floating my-2">
-          <input type="email" class="form-control" id="floatingInput" name="email" placeholder="name@example.com" required>
+          <input type="text" class="form-control" id="floatingInput" placeholder="Mobile Number" name="mobno" required>
           <label for="floatingInput">Mobile Number</label>
         </div>
       <div class="form-floating my-2">
-          <input type="email" class="form-control" id="floatingInput" name="email" placeholder="name@example.com" required>
+          <input type="text" class="form-control" id="floatingInput" placeholder="Aadhar Number"  name="aadharno" required>
           <label for="floatingInput">Aadhar Number</label>
+        </div>
+      <div class="form-floating my-2">
+          <input type="text" class="form-control" id="floatingInput" placeholder="VoterID Card no." name="voterid" required>
+          <label for="floatingInput">VoterID Card no.</label>
         </div>
         <div class="mb-3">
           <label for="formFile" class="form-label mx-1">Aadhar Card (*png, *jpeg, *pdf)</label>
-          <input class="form-control" type="file" id="formFile">
+          <input class="form-control" type="file" id="formFile" name="aadhar_card" required>
         </div>
         <div class="mb-3">
           <label for="formFile" class="form-label mx-1">VoterID Card (*png, *jpeg, *pdf)</label>
-          <input class="form-control" type="file" id="formFile">
+          <input class="form-control" type="file" id="formFile" name="voterid_card" required>
         </div>
         <button class="btn btn-primary" type="submit">Submit Details</button>
   </form>
-  {% else%}
-  <h5 style="color:green;"><b>Your KYC is Approved Successfully</b></h5>
+  {% elif user_details['verified_voter'] %}
+  <div class="alert alert-success" role="alert">
+    <b>Your Voter KYC is Approved Successfully!</b>
+    <div class="form-floating my-2">
+      <input type="text" class="form-control" id="floatingInput" placeholder="VoterID Card no." name="name" value="{{voter_kyc_details['name']}}" required disabled>
+      <label for="floatingInput">Full Name</label>
+    </div>
+    <div class="form-floating my-2">
+      <input type="email" class="form-control" id="floatingInput" placeholder="VoterID Card no." name="name" value="{{user_details['email']}}" required disabled>
+      <label for="floatingInput">Full Name</label>
+    </div>
+    <div class="form-floating my-2">
+      <input type="password" class="form-control" id="floatingInput" placeholder="VoterID Card no." name="voterid" value="{{voter_kyc_details['voterid']}}" required disabled>
+      <label for="floatingInput">VoterId</label>
+    </div>
+  </div>
+  {% elif user_details['applied_for_voter_kyc'] %}
+  <div class="alert alert-warning" role="alert">
+    <b>You have successfully applied for your voter KYC! We will inform you once its is verified!</b>
+  </div>
   {% endif %}
     </main>
-    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4" id="candidate_section" style="display: none;">
+    <main class="sections col-md-9 ms-sm-auto col-lg-10 px-md-4" id="candidate_dashboard" style="display: none;">
       <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2">Candidate Dashboard</h1>
-
       </div>
+
+    {% if not user_details['applied_for_candidate_kyc'] %}
+    <div class="alert alert-danger" role="alert">
+      <b>Complete Your KYC before you can stand for elections!</b>
+    </div>
+    <form action="/candidate/kyc" method="post" enctype=multipart/form-data>
+        <div class="form-floating my-2">
+            <input type="text" class="form-control" id="floatingInput" placeholder="Full Name" name="name" value="{{voter_kyc_details['name']}}" required disabled>
+            <label for="floatingInput">Full Name</label>
+          </div>
+        <div class="form-floating my-2">
+            <input type="text" class="form-control" id="floatingInput" placeholder="Mobile Number" name="mobno" value="{{voter_kyc_details['mobno']}}" required disabled> 
+            <label for="floatingInput">Mobile Number</label>
+          </div>
+        <div class="form-floating my-2">
+            <input type="password" class="form-control" id="floatingInput" placeholder="Aadhar Number"  name="aadharno" value="{{voter_kyc_details['aadharno']}}" required disabled>
+            <label for="floatingInput">Aadhar Number</label>
+          </div>
+        <div class="form-floating my-2">
+            <input type="password" class="form-control" id="floatingInput" placeholder="VoterID Card no." name="voterid" value="{{voter_kyc_details['voterid']}}" required disabled>
+            <label for="floatingInput">VoterID Card no.</label>
+          </div>
+          <div class="form-floating my-2">
+            <input type="text" class="form-control" id="floatingInput" placeholder="VoterID Card no." name="political_party_name" required>
+            <label for="floatingInput">Political Party Name</label>
+          </div>
+          <div class="form-floating my-2">
+            <input type="text" class="form-control" id="floatingInput" placeholder="VoterID Card no." name="party_affiliation_id" required>
+            <label for="floatingInput">Party Affiliation ID</label>
+          </div>
+            <select class="form-select my-2 " aria-label="Default select example">
+              <option selected>Position you want to stand for?</option>
+              <option value="PM">Prime Minister</option>
+              <option value="MLA">MLA</option>
+              <option value="MP">MP</option>
+            </select>
+          <button class="btn btn-primary" type="submit">Submit Details</button>
+    </form>
+    {% elif user_details['verified_candidate'] %}
+    <div class="alert alert-success" role="alert">
+      <b>Your Candidate KYC is Approved Successfully!</b>
+      <div class="form-floating my-2">
+        <input type="text" class="form-control" id="floatingInput" placeholder="VoterID Card no." name="political_party_name" value="{{candidate_kyc_details['political_party_name']}}" required disabled>
+        <label for="floatingInput">Political Party Name</label>
+      </div>
+      <div class="form-floating my-2">
+        <input type="text" class="form-control" id="floatingInput" placeholder="VoterID Card no." name="party_affiliation_id" value="{{candidate_kyc_details['party_affiliation_id']}}" required disabled>
+        <label for="floatingInput">Party Affiliation ID</label>
+      </div>
+    </div>
+    {% elif user_details['applied_for_candidate_kyc'] %}
+    <div class="alert alert-warning" role="alert">
+      <b>You have successfully applied for your Candidate KYC! We will inform you once its is verified!</b>
+    </div>
+    {% endif %}
     </main>
+    {% if user_details['verified_candidate'] %}
+    <main class="sections col-md-9 ms-sm-auto col-lg-10 px-md-4" id="candidate_profile" style="display: none;">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Candidate Profile</h1>
+    </div>
+      <div class="alert alert-info" role="alert">
+        <b>This data will be visible to voters! Choose your words wisely!</b>
+      </div>
+      <form action="/candidate/profile" method="post" enctype=multipart/form-data>
+        <div class="form-floating my-2">
+            <input type="text" class="form-control" id="floatingInput" placeholder="Full Name" value="{{voter_kyc_details['name']}}" required disabled>
+            <label for="floatingInput">Full Name</label>
+          </div>
+          <div class="form-floating my-2">
+            <input type="text" class="form-control" id="floatingInput" placeholder="VoterID Card no." value="{{candidate_kyc_details['political_party_name']}}" required disabled>
+            <label for="floatingInput">Political Party Name</label>
+          </div>
+          <div class="form-floating my-2">
+            <input type="text" class="form-control" id="floatingInput" placeholder="Tagline" name="candidate_tagline" value="{{candidate_kyc_details['candidate_tagline']}}" required>
+            <label for="floatingInput">Tagline</label>
+          </div>
+          <div class="form-floating my-2">
+            <textarea class="form-control" placeholder="VoterID Card no." name="pitch_to_voters" rows="5" cols="40"  style="height: 150px" required>{{candidate_kyc_details['pitch_to_voters']}}</textarea>
+            <label for="floatingInput">Address/Pitch Voters</label>
+          </div>
+          <div class="form-floating my-2">
+            <textarea class="form-control" id="floatingInput" placeholder="VoterID Card no." name="campaign_promises" style="height: 150px" required>{{candidate_kyc_details['campaign_promises']}}</textarea>
+            <label for="floatingInput">Campaign Promises</label>
+          </div>
+          <div class="form-floating my-2">
+            <textarea class="form-control" id="floatingInput" placeholder="VoterID Card no." name="candidate_background" style="height: 150px" required>{{candidate_kyc_details['candidate_background']}}</textarea>
+            <label for="floatingInput">Background / Experiences / Educational Qualifications</label>
+          </div>
+
+       
+          <button class="btn btn-primary" type="submit">Submit Details</button>
+    </form>
+    </main>
+    {% endif %}
+    {% if voting_is_live and user_details['verified_voter'] %}
+    <main class="sections col-md-9 ms-sm-auto col-lg-10 px-md-4" id="live_voting" style="display: none;">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Vote for Candidates</h1>
+    </div>
+    <div class="row">
+      <div class="col-sm-4 my-1">
+        {% for candidate in all_candidates %}
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">{{candidate['name'].upper()}}</h5>
+            <h6 class="card-title text-muted">{{candidate['candidate_details'][0]['political_party_name'].upper()}}</h6>
+            <p class="card-text"><b>{{candidate['candidate_details'][0]['candidate_tagline']}}</b></p>
+            <a href="/vote/{{candidate['merchant_id']}}" class="btn btn-primary">See Full Profile & Vote</a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+    </div>
+      
+    </main>
+    {% endif %}
   </div>
 </div>
 

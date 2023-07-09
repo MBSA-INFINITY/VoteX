@@ -1,13 +1,14 @@
 from flask import Flask, request, session, redirect,url_for, render_template, flash, abort
 import os
 from database.auth import auth 
-from database.db import users_collection
+from database.db import users_collection, voter_kyc_collection, candidate_kyc_collection
 
 app = Flask(__name__)
 app.secret_key = os.environ['APP_SECRET_KEY']
 
 exempted_endpoints = ['static','login','signup']
 
+voting_is_live = True
 
 @app.route("/signup", methods = ['GET','POST'])
 def signup():
@@ -25,7 +26,8 @@ def signup():
                     user_details['merchant_id'] = _user_['localId']
                     user_details['verified_voter'] = False
                     user_details['verified_candidate'] = False
-                    user_details['applied_for_kyc'] = False
+                    user_details['applied_for_voter_kyc'] = False
+                    user_details['applied_for_candidate_kyc'] = False
                     users_collection.insert_one(user_details)
                     return render_template("success.html")
                 except Exception as e:
@@ -70,7 +72,121 @@ def login():
 @app.route("/")
 def dashboard():
     user_details = users_collection.find_one({"merchant_id": session['user']},{"_id":0})
-    return render_template('dashboard.html',user_details=user_details)
+    voter_kyc_details = voter_kyc_collection.find_one({"merchant_id": session['user']},{"_id":0})
+    candidate_kyc_details = candidate_kyc_collection.find_one({"merchant_id": session['user']},{"_id":0})
+    if voting_is_live:
+        pipeline = [
+    {
+        '$match': {
+            'verified_candidate': True
+        }
+    }, 
+    {
+         '$project': {
+            '_id': 0
+        }
+    },
+    {
+        '$lookup': {
+            'from': 'candidate_kyc', 
+            'localField': 'merchant_id', 
+            'foreignField': 'merchant_id', 
+            'as': 'candidate_details'
+        }
+    }
+]
+        all_candidates = list(users_collection.aggregate(pipeline))
+        return render_template('dashboard.html',user_details=user_details,voter_kyc_details=voter_kyc_details,candidate_kyc_details=candidate_kyc_details,voting_is_live=voting_is_live,all_candidates=all_candidates)
+    return render_template('dashboard.html',user_details=user_details,voter_kyc_details=voter_kyc_details,candidate_kyc_details=candidate_kyc_details,voting_is_live=voting_is_live,all_candidates=[])
+
+
+@app.route("/voter/kyc", methods = ['POST'])
+def voter_kyc():
+    if request.method == 'POST':
+        voter_kyc_data = dict(request.form)
+        aadhar_card = request.files['aadhar_card']
+        if aadhar_card.filename == '':
+            flash('No aadhar_card selected file')
+            return
+        voterid_card = request.files['voterid_card']
+        if voterid_card.filename == '':
+            flash('No voterid_card selected file')
+            return
+        #storing files is Databse for KYC
+        voter_kyc_data['aadhar_card_link'] = ""
+        voter_kyc_data['voterid_card_link'] = ""
+        voter_kyc_data['merchant_id'] = session['user']
+        try:
+            users_collection.update_one({"merchant_id": session['user']},{"$set":{"applied_for_voter_kyc": True}})
+            voter_kyc_collection.insert_one(voter_kyc_data)
+            return redirect(url_for('dashboard'))
+        except Exception as e:
+            abort(500,{"message": f"Error Inserting to Database: {str(e)}"})
+
+
+@app.route("/candidate/kyc", methods = ['POST'])
+def candidate_kyc():
+    if request.method == 'POST':
+        candidate_kyc_data = dict(request.form)
+        candidate_kyc_data['merchant_id'] = session['user']
+        try:
+            users_collection.update_one({"merchant_id": session['user']},{"$set":{"applied_for_candidate_kyc": True}})
+            candidate_kyc_collection.insert_one(candidate_kyc_data)
+            return redirect(url_for('dashboard'))
+        except Exception as e:
+            abort(500,{"message": f"Error Inserting to Database: {str(e)}"})
+
+
+@app.route("/candidate/profile", methods = ['POST'])
+def candidate_profile():
+    if request.method == 'POST':
+        candidate_profile_data = dict(request.form)
+        try:
+            candidate_kyc_collection.update_one({"merchant_id": session['user']},{"$set":candidate_profile_data})
+            flash("Candidate Profile Updated")
+            return redirect(url_for('dashboard'))
+        except Exception as e:
+            abort(500,{"message": f"Error Inserting to Database: {str(e)}"})
+
+
+@app.route("/vote/<string:candidate_id>/", methods = ['GET','POST'])
+def vote_for_candidate(candidate_id):
+    if request.method == 'POST':
+        candidate_profile_data = dict(request.form)
+        try:
+            candidate_kyc_collection.update_one({"merchant_id": session['user']},{"$set":candidate_profile_data})
+            flash("Candidate Profile Updated")
+            return redirect(url_for('dashboard'))
+        except Exception as e:
+            abort(500,{"message": f"Error Inserting to Database: {str(e)}"})
+    if voting_is_live:
+        pipeline = [
+                {
+                    '$match': {
+                        'verified_candidate': True,
+                        'merchant_id': candidate_id
+                    }
+                }, 
+                {
+                    '$project': {
+                        '_id': 0
+                    }
+                },
+                {
+                    '$lookup': {
+                        'from': 'candidate_kyc', 
+                        'localField': 'merchant_id', 
+                        'foreignField': 'merchant_id', 
+                        'as': 'candidate_details'
+                    }
+                }
+            ]
+        candidate_details = list(users_collection.aggregate(pipeline))
+        if candidate_details:
+            return render_template('candidate_vote.html')
+    else:
+        abort(500, {"message":"Voting is not Live Now!! Comeback Later!"})
+    
 
 
 @app.route("/logout", methods = ['GET','POST'])

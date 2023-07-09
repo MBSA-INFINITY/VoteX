@@ -18,3 +18,5 @@ db_client = db_client.get_database(DB_NAME)
 
 
 users_collection = db_client['users']
+voter_kyc_collection = db_client['voter_kyc']
+candidate_kyc_collection = db_client['candidate_kyc']
