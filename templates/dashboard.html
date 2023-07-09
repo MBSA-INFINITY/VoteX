@@ -272,7 +272,7 @@
         {% for candidate in all_candidates %}
         <div class="card">
           <div class="card-body">
-            <h5 class="card-title">{{candidate['name'].upper()}}</h5>
+            <h5 class="card-title">{{candidate['voter_details'][0]['name'].upper()}}</h5>
             <h6 class="card-title text-muted">{{candidate['candidate_details'][0]['political_party_name'].upper()}}</h6>
             <p class="card-text"><b>{{candidate['candidate_details'][0]['candidate_tagline']}}</b></p>
             <a href="/vote/{{candidate['merchant_id']}}" class="btn btn-primary">See Full Profile & Vote</a>

@@ -93,7 +93,22 @@ def dashboard():
             'foreignField': 'merchant_id', 
             'as': 'candidate_details'
         }
-    }
+    },
+      {
+                    '$lookup': {
+                        'from': 'voter_kyc', 
+                        'localField': 'merchant_id', 
+                        'foreignField': 'merchant_id', 
+                        'as': 'voter_details'
+                    }
+                },
+                {
+                    '$project': {
+                        '_id': 0,
+                        'candidate_details._id': 0,
+                        'voter_details._id': 0,
+                    }
+                },
 ]
         all_candidates = list(users_collection.aggregate(pipeline))
         return render_template('dashboard.html',user_details=user_details,voter_kyc_details=voter_kyc_details,candidate_kyc_details=candidate_kyc_details,voting_is_live=voting_is_live,all_candidates=all_candidates)
@@ -152,13 +167,7 @@ def candidate_profile():
 @app.route("/vote/<string:candidate_id>/", methods = ['GET','POST'])
 def vote_for_candidate(candidate_id):
     if request.method == 'POST':
-        candidate_profile_data = dict(request.form)
-        try:
-            candidate_kyc_collection.update_one({"merchant_id": session['user']},{"$set":candidate_profile_data})
-            flash("Candidate Profile Updated")
-            return redirect(url_for('dashboard'))
-        except Exception as e:
-            abort(500,{"message": f"Error Inserting to Database: {str(e)}"})
+        return "MBSA"
     if voting_is_live:
         pipeline = [
                 {
@@ -168,22 +177,33 @@ def vote_for_candidate(candidate_id):
                     }
                 }, 
                 {
-                    '$project': {
-                        '_id': 0
-                    }
-                },
-                {
                     '$lookup': {
                         'from': 'candidate_kyc', 
                         'localField': 'merchant_id', 
                         'foreignField': 'merchant_id', 
                         'as': 'candidate_details'
                     }
-                }
+                },
+                {
+                    '$lookup': {
+                        'from': 'voter_kyc', 
+                        'localField': 'merchant_id', 
+                        'foreignField': 'merchant_id', 
+                        'as': 'voter_details'
+                    }
+                },
+                {
+                    '$project': {
+                        '_id': 0,
+                        'candidate_details._id': 0,
+                        'voter_details._id': 0,
+                    }
+                },
             ]
         candidate_details = list(users_collection.aggregate(pipeline))
         if candidate_details:
-            return render_template('candidate_vote.html')
+            candidate_details = candidate_details[0]
+            return render_template('candidate_vote.html',candidate_details=candidate_details)
     else:
         abort(500, {"message":"Voting is not Live Now!! Comeback Later!"})
     
