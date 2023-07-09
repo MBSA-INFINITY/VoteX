@@ -45,10 +45,11 @@ export MONGO_USERNAME=YOUR_MONGO_USERNAME
 export MONGO_PASSWORD=YOUR_MONGO_PASSWORD
 export DB_NAME=YOUR_DB_NAME
 ```
-3. If you wan tot use dev mode you can put the following in the .env :- 
+3. If you wan to use dev mode you can put the following in the .env :- 
 ```bash
 export ENVIRONMENT=dev
 ```
-
+# Run the Project
+- To run the project just run `./start_server.sh` in git bash terminal.
 
 
