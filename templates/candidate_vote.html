@@ -14,12 +14,18 @@
         <h1 class="display-5 fw-bold">{{candidate_details['voter_details'][0]['name']}}</h1>
         <h5 class="text-muted mb-4">{{candidate_details['candidate_details'][0]['political_party_name']}}</h5>
         <h3 class="text-muted mb-4">{{candidate_details['candidate_details'][0]['candidate_tagline']}}</h3>
+        {% if not voter_details['voted'] %}
         <form action="/vote/{{candidate_details['merchant_id']}}" method="post" onsubmit="return CheckSubmit()">
             <div class="d-grid gap-2 d-sm-flex justify-content-sm-center my-2">
                 <button type="submit" class="btn btn-primary btn-lg px-4 gap-3" >Vote for Candidate</button>
                 <button type="button" class="btn btn-outline-danger btn-lg px-4">Report Candidate</button>
               </div>
         </form>
+        {% else %}
+        <div class="alert alert-info" role="alert">
+            <b>You have already cast your vote!</b>
+          </div>
+        {% endif %}
         <div class="col-lg-6 mx-auto my-5">
             <h5 class="text-muted mb-4">What does candidate {{candidate_details['voter_details'][0]['name']}} have to say to you?</h5>
           <p class="lead mb-4">{{candidate_details['candidate_details'][0]['pitch_to_voters']}}</p>
@@ -32,12 +38,18 @@
             <h5 class="text-muted mb-4">{{candidate_details['voter_details'][0]['name']}}'s Background/Experiences</h5>
           <p class="lead mb-4">{{candidate_details['candidate_details'][0]['candidate_background']}}</p>
         </div>
+        {% if not voter_details['voted'] %}
         <form action="/vote/{{candidate_details['merchant_id']}}" method="post" onsubmit="return CheckSubmit()">
             <div class="d-grid gap-2 d-sm-flex justify-content-sm-center my-2">
-                <button type="submit" class="btn btn-primary btn-lg px-4 gap-3">Vote for Candidate</button>
+                <button type="submit" class="btn btn-primary btn-lg px-4 gap-3" >Vote for Candidate</button>
                 <button type="button" class="btn btn-outline-danger btn-lg px-4">Report Candidate</button>
               </div>
         </form>
+        {% else %}
+        <div class="alert alert-info" role="alert">
+            <b>You have already cast your vote!</b>
+          </div>
+        {% endif %}
       </div>
 </body>
 <script>

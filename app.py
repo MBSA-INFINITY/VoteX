@@ -1,7 +1,7 @@
 from flask import Flask, request, session, redirect,url_for, render_template, flash, abort
 import os
 from database.auth import auth 
-from database.db import users_collection, voter_kyc_collection, candidate_kyc_collection
+from database.db import users_collection, voter_kyc_collection, candidate_kyc_collection, voting_details_collection
 
 app = Flask(__name__)
 app.secret_key = os.environ['APP_SECRET_KEY']
@@ -131,6 +131,7 @@ def voter_kyc():
         voter_kyc_data['aadhar_card_link'] = ""
         voter_kyc_data['voterid_card_link'] = ""
         voter_kyc_data['merchant_id'] = session['user']
+        voter_kyc_data['voted'] = False
         try:
             users_collection.update_one({"merchant_id": session['user']},{"$set":{"applied_for_voter_kyc": True}})
             voter_kyc_collection.insert_one(voter_kyc_data)
@@ -144,6 +145,7 @@ def candidate_kyc():
     if request.method == 'POST':
         candidate_kyc_data = dict(request.form)
         candidate_kyc_data['merchant_id'] = session['user']
+        candidate_kyc_data['vote_count'] = 0
         try:
             users_collection.update_one({"merchant_id": session['user']},{"$set":{"applied_for_candidate_kyc": True}})
             candidate_kyc_collection.insert_one(candidate_kyc_data)
@@ -167,7 +169,11 @@ def candidate_profile():
 @app.route("/vote/<string:candidate_id>/", methods = ['GET','POST'])
 def vote_for_candidate(candidate_id):
     if request.method == 'POST':
-        return "MBSA"
+        data = {"candidate_id": candidate_id,"voter_id": session['user']}
+        candidate_kyc_collection.update_one({"merchant_id": candidate_id},{"$inc":{"vote_count": 1}})
+        voter_kyc_collection.update_one({"merchant_id": session['user']},{"$set":{"voted": True}})
+        voting_details_collection.insert_one(data)
+        return redirect(url_for('dashboard'))
     if voting_is_live:
         pipeline = [
                 {
@@ -203,7 +209,8 @@ def vote_for_candidate(candidate_id):
         candidate_details = list(users_collection.aggregate(pipeline))
         if candidate_details:
             candidate_details = candidate_details[0]
-            return render_template('candidate_vote.html',candidate_details=candidate_details)
+            voter_details = voter_kyc_collection.find_one({"merchant_id" : session['user']},{"_id":0})
+            return render_template('candidate_vote.html',candidate_details=candidate_details,voter_details= voter_details)
     else:
         abort(500, {"message":"Voting is not Live Now!! Comeback Later!"})
     

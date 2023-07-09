@@ -63,6 +63,14 @@
             </a>
           </li>
           {% endif %}
+          {% if voter_kyc_details['voted'] %}
+          <li class="nav-item">
+            <a id="live_updates_nav" style="cursor: pointer;" class="nav-link" aria-current="page" onclick="toggle('live_updates')">
+              <span data-feather="home" class="align-text-bottom"></span>
+            Live Updates
+            </a>
+          </li>
+          {% endif %}
 
 
         </ul>
@@ -269,6 +277,7 @@
     </div>
     <div class="row">
       <div class="col-sm-4 my-1">
+        {% if not voter_kyc_details['voted'] %}
         {% for candidate in all_candidates %}
         <div class="card">
           <div class="card-body">
@@ -279,6 +288,35 @@
           </div>
         </div>
         {% endfor %}
+        {% else %}
+        <div class="alert alert-info" role="alert">
+          <b>You have already cast your vote!</b>
+        </div>
+        {% endif %}
+      </div>
+
+    </div>
+      
+    </main>
+    {% endif %}
+    {% if voter_kyc_details['voted'] %}
+    <main class="sections col-md-9 ms-sm-auto col-lg-10 px-md-4" id="live_updates" style="display: none;">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Vote for Candidates</h1>
+    </div>
+    <div class="row">
+      <div class="col-sm-4 my-1">
+        {% for candidate in all_candidates %}
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">{{candidate['voter_details'][0]['name'].upper()}}</h5>
+            <h6 class="card-title text-muted">{{candidate['candidate_details'][0]['political_party_name'].upper()}}</h6>
+            <p class="card-text"><b>{{candidate['candidate_details'][0]['candidate_tagline']}}</b></p>
+            <p class="card-text"><b>VOTE-COUNT:- {{candidate['candidate_details'][0]['vote_count']}}</b></p>
+          </div>
+        </div>
+        {% endfor %}
+
       </div>
 
     </div>
