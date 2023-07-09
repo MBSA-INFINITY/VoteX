@@ -3,8 +3,11 @@ A Digital Voting System
 
 # Steps to setup the project
 - Clone the repository
-- Run `pip install -r requirements.txt`
-# Firebase Setup for Backend
+- Create a Python Virtual environment and activate it!
+- Run `pip install -r requirements.txt` in the environment to install all the dependencies and libraries.
+- create an `.env` file in the project directory to add all the environment variables.
+
+# Firebase Setup for Authentication
 1. Create a firebase project and get all the configurations of the project from `Project Settings`.
 
 2. Navigate to the **Authentication** section in your firebase project and enable the `Email and Password`
@@ -35,17 +38,18 @@ export FIREBASE_MESSAGING_SENDER_ID=YOUR_MESSAGING_SENDER_ID
 export FIREBASE_APP_ID=YOUR_APP_ID
 ```
 # MonoDB Setup for Backend
-1. Create a mongodb cluster in MonDB Atlas and the add the required configurations in the .env.
+1. Create a mongodb cluster in MonDB Atlas and the add the required configurations in the `.env`.
 
 2. Now in you `.env` file include the following parameters as it is :-
 ```bash
 export ENVIRONMENT=prod
+export APP_SECRET_KEY=ANY_SECRET_STRING
 export MONGO_URI=YOUR_MONGO_URI
 export MONGO_USERNAME=YOUR_MONGO_USERNAME
 export MONGO_PASSWORD=YOUR_MONGO_PASSWORD
 export DB_NAME=YOUR_DB_NAME
 ```
-3. If you wan to use dev mode you can put the following in the .env :- 
+3. If you want to use dev mode you can put the following in the `.env` instead (**make sure to run the mongodb in local**):- 
 ```bash
 export ENVIRONMENT=dev
 ```
